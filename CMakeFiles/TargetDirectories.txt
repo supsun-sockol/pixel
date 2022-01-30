@@ -1,0 +1,6 @@
+/home/supsun/Documents/pixel/CMakeFiles/lib.dir
+/home/supsun/Documents/pixel/CMakeFiles/pixel.dir
+/home/supsun/Documents/pixel/CMakeFiles/tests.dir
+/home/supsun/Documents/pixel/CMakeFiles/test.dir
+/home/supsun/Documents/pixel/CMakeFiles/edit_cache.dir
+/home/supsun/Documents/pixel/CMakeFiles/rebuild_cache.dir

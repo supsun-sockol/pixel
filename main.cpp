@@ -2,15 +2,16 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include "matrix.h"
 
 using namespace std;
 
 int main()
 {
 
-    int matrix_w = 100;
-    int matrix_h = 100;
-    int pixel_w = 5;
+    int matrix_w = 10;
+    int matrix_h = 10;
+    int pixel_w = 50;
     int border_count = 10;
     int fps = 10;
 
@@ -24,7 +25,7 @@ int main()
     emptyTexture.create(w, h);
     sf::Sprite emptySprite = sf::Sprite(emptyTexture.getTexture());
     sf::Shader shader;
-    shader.loadFromFile("/home/supsun/Documents/pixel/matrix.frag", sf::Shader::Fragment);
+    shader.loadFromFile("/home/supsun/Documents/pixel/shader.frag", sf::Shader::Fragment);
 
     while (window.isOpen())
     {

@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/tests.dir/tests/test.cpp.o -o tests  /usr/lib/libgtest_main.so.1.11.0 /usr/lib/libsfml-graphics.so.2.5.1 /usr/lib/libgtest.so.1.11.0 -lpthread /usr/lib/libsfml-window.so.2.5.1 /usr/lib/libsfml-system.so.2.5.1 
