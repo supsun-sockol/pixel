@@ -5,11 +5,11 @@
 #include "matrix.h"
 #include <random>
 
-int matrix_w = 100;
-int matrix_h = 100;
-int pixel_w = 5;
+int matrix_w = 8;
+int matrix_h = 7;
+int pixel_w = 50;
 int border_count = 10;
-int fps = 50;
+int fps = 3;
 int border_w = floor((float)pixel_w/(float)border_count);
 int w = matrix_w*(pixel_w+border_w)+border_w;
 int h = matrix_h*(pixel_w+border_w)+border_w;

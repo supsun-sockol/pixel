@@ -39,11 +39,12 @@ public:
         if (this->borderCross){
             float fx = float(x);
             float fy = float(y);
-            float fw = float(w);
+            float fw = float(this->w);
+            float fh = float(this->h);
             x  = fx - floor(fx/fw)*fw;
-            y  = fy - floor(fy/fw)*fw;
+            y  = fy - floor(fy/fh)*fh;
         }
-        return this->a[x][y];
+        return this->a[y][x];
     }
     void set(int x, int y, T newT){
         if (this->borderCross){
@@ -53,7 +54,7 @@ public:
             x  = fx - floor(fx/fw)*fw;
             y  = fy - floor(fy/fw)*fw;
         }
-        this->a[x][y] =  newT;
+        this->a[y][x] =  newT;
     }
     void BorderOn(){
         this->borderCross = false;
