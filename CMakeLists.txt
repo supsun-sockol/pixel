@@ -12,23 +12,27 @@ find_package(SFML COMPONENTS graphics CONFIG REQUIRED)
 find_package(GTest REQUIRED)
 
 
-add_library(lib STATIC ${CMAKE_CURRENT_SOURCE_DIR}/include/matrix.h)
+add_library(${PROJECT_NAME} STATIC
+    include/matrix.h
+    sources/matrix.cpp
+    )
 
-add_executable(pixel main.cpp)
+add_executable(main main.cpp)
 
-target_include_directories(lib PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/shaders>"
     "${SFML_ROOT}/include"
 )
 
 
-target_link_libraries(pixel PUBLIC sfml-graphics)
+target_link_libraries(main PUBLIC ${PROJECT_NAME} sfml-graphics)
 
 if(BUILD_TESTS)
   add_executable(tests
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
   )
-  target_link_libraries(tests GTest::gtest_main ${OPENGL_LIBRARIES} sfml-graphics)
+  target_link_libraries(tests GTest::gtest_main ${PROJECT_NAME} ${OPENGL_LIBRARIES} sfml-graphics)
   enable_testing()
   add_test(NAME unit_tests COMMAND tests)
 endif()
