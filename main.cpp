@@ -4,12 +4,22 @@
 #include <cmath>
 #include "matrix.h"
 #include <random>
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
-int matrix_w = 8;
-int matrix_h = 7;
-int pixel_w = 50;
-int border_count = 10;
-int fps = 3;
+enum modes{
+    newRandom,
+    fromFile,
+    graphicRandom
+};
+modes work_mode=newRandom;
+int matrix_w = 100;
+int matrix_h = 100;
+int pixel_w = 5;
+const int border_count = 10;
+int fps = 5;
+int count = 10000;
+std::string filename="../files/test.lpix";
 int border_w = floor((float)pixel_w/(float)border_count);
 int w = matrix_w*(pixel_w+border_w)+border_w;
 int h = matrix_h*(pixel_w+border_w)+border_w;
@@ -74,59 +84,164 @@ void LifeTick(matrix<int>& m){
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
-    matrix<int> m(matrix_w, matrix_h, 0);
+   std::string  string_work_mode;
+    po::options_description desc("Allowed options");
+      desc.add_options()
+              ("t", po::value<std::string>(&string_work_mode), "set work mode(REQUIRED)")
+              ("h", po::value<int>(&matrix_h), "set hight (REQUIRED)")
+              ("w", po::value<int>(&matrix_w), "set width (REQUIRED)")
+              ("p", po::value<int>(&pixel_w)->default_value(1), "")
+              ("f", po::value<int>(&fps)->default_value(1), "")
+              ("c", po::value<int>(&count)->default_value(100), "")
+              ("help", "produce help message");
 
-    for (int y=0; y<matrix_h; y++){
-        for (int x = 0; x<matrix_w; x++){
-            m.get(x, y) = rand()%2;
-        }
-    }
+      po::variables_map vm;
+      po::store(po::parse_command_line(argc, argv, desc), vm);
+      po::notify(vm);
+
+      if (vm.count("help")) {
+        std::cout << desc << "\n";
+        return 1;
+      }
+
+      if (!vm.count("t")||!vm.count("h")||!vm.count("w")) {
+        std::cout << "Usage: pixel [options]\n" << desc;
+        exit(EXIT_FAILURE);
+      }
+
+    if (string_work_mode=="fromFile"){
+        std::ifstream ifile(filename, std::ios::binary);
+        matrix<int> m(matrix_w, matrix_h, 0);
 
 
-    sf::RenderWindow window(sf::VideoMode(w, h), "pixel");
-    window.setFramerateLimit(fps);
-    sf::RenderTexture emptyTexture;
 
-    emptyTexture.create(w, h);
-    sf::Sprite grid = sf::Sprite(emptyTexture.getTexture());
-    sf::Shader gridshader;
-    gridshader.loadFromFile("/home/supsun/Documents/pixel/shaders/grid.frag", sf::Shader::Fragment);
 
-    sf::Shader drawshader;
-    drawshader.loadFromFile("/home/supsun/Documents/pixel/shaders/draw.frag", sf::Shader::Fragment);
+        sf::RenderWindow window(sf::VideoMode(w, h), "pixel");
+        window.setFramerateLimit(fps);
+        sf::RenderTexture emptyTexture;
 
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
+        emptyTexture.create(w, h);
+        sf::Sprite grid = sf::Sprite(emptyTexture.getTexture());
+        sf::Shader gridshader;
+        gridshader.loadFromFile("../shaders/grid.frag", sf::Shader::Fragment);
+
+        sf::Shader drawshader;
+        drawshader.loadFromFile("../shaders/draw.frag", sf::Shader::Fragment);
+        while (window.isOpen())
         {
-            if (event.type == sf::Event::Closed)
+            if (!ifile.eof()){
+                ifile >> m;
+            }
+            sf::Event event;
+            while (window.pollEvent(event))
             {
-                window.close();
+                if (event.type == sf::Event::Closed)
+                {
+                    window.close();
+                }
+
+
+
+            }
+            window.clear();
+
+            DarwMatrix(m, 0, matrix_w, 0, matrix_h, window, drawshader);
+
+
+            if (border_w>0){
+                gridshader.setUniform("w", (float)w);
+                gridshader.setUniform("h", (float)h);
+                gridshader.setUniform("b_w", (float)border_w);
+                gridshader.setUniform("b_c", (float)border_count);
+                window.draw(grid, &gridshader);
             }
 
-
+            window.display();
 
         }
-        window.clear();
+    }
+    else if (string_work_mode=="graphicRandom")
+    {
+        std::ofstream ofile(filename, std::ios::binary);
+        srand(time(0));
+        matrix<int> m(matrix_w, matrix_h, 0);
 
-        DarwMatrix(m, 0, matrix_w, 0, matrix_h, window, drawshader);
-
-
-        if (border_w>0){
-            gridshader.setUniform("w", (float)w);
-            gridshader.setUniform("h", (float)h);
-            gridshader.setUniform("b_w", (float)border_w);
-            gridshader.setUniform("b_c", (float)border_count);
-            window.draw(grid, &gridshader);
+        for (int y=0; y<matrix_h; y++){
+            for (int x = 0; x<matrix_w; x++){
+                m.get(x, y) = rand()%2;
+            }
         }
 
-        window.display();
 
-        LifeTick(m);
+        sf::RenderWindow window(sf::VideoMode(w, h), "pixel");
+        window.setFramerateLimit(fps);
+        sf::RenderTexture emptyTexture;
+
+        emptyTexture.create(w, h);
+        sf::Sprite grid = sf::Sprite(emptyTexture.getTexture());
+        sf::Shader gridshader;
+        gridshader.loadFromFile("../shaders/grid.frag", sf::Shader::Fragment);
+
+        sf::Shader drawshader;
+        drawshader.loadFromFile("../shaders/draw.frag", sf::Shader::Fragment);
+
+        while (window.isOpen())
+        {
+            ofile<<m<<"\n";
+            sf::Event event;
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::Closed)
+                {
+                    window.close();
+                }
+
+
+
+            }
+            window.clear();
+
+            DarwMatrix(m, 0, matrix_w, 0, matrix_h, window, drawshader);
+
+
+            if (border_w>0){
+                gridshader.setUniform("w", (float)w);
+                gridshader.setUniform("h", (float)h);
+                gridshader.setUniform("b_w", (float)border_w);
+                gridshader.setUniform("b_c", (float)border_count);
+                window.draw(grid, &gridshader);
+            }
+
+            window.display();
+
+            LifeTick(m);
+
+        }
+        ofile.close();
 
     }
+    else if (string_work_mode=="newRandom"){
+        std::ofstream ofile(filename, std::ios::binary);
+        srand(time(0));
+        matrix<int> m(matrix_w, matrix_h, 0);
+
+        for (int y=0; y<matrix_h; y++){
+            for (int x = 0; x<matrix_w; x++){
+                m.get(x, y) = rand()%2;
+            }
+        }
+        for (int i=0; i<count; i++){
+            if(i%(count/100)==0){
+                std::cout<<"|";
+            }
+            ofile<<m<<"\n";
+            sf::Event event;
+            LifeTick(m);
+        }
+        ofile.close();
+    }
+
     return 0;
 }

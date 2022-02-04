@@ -70,4 +70,6 @@ Thumbs.db
 # --------
 *.dll
 *.exe
-CMakeLists.txt.user
+CMakeLists.txt.*
+build/*
+CmakeFiles/*

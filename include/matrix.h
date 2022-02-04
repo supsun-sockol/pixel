@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include <fstream>
 
 template <typename T>
 class matrix
@@ -28,9 +29,9 @@ public:
         this->h=y;
         this->borderCross = true;
         this->a = std::vector<std::vector<T>>(y);
-        for(int i; i<y; i++){
+        for(int i = 0; i<y; i++){
             a[i]= std::vector<T>(x);
-            for (int j =0; j < x; j++){
+            for (int j = 0; j < x; j++){
                 a[i][j] = base;
             }
         }
@@ -50,9 +51,10 @@ public:
         if (this->borderCross){
             float fx = float(x);
             float fy = float(y);
-            float fw = float(w);
+            float fw = float(this->w);
+            float fh = float(this->h);
             x  = fx - floor(fx/fw)*fw;
-            y  = fy - floor(fy/fw)*fw;
+            y  = fy - floor(fy/fh)*fh;
         }
         this->a[y][x] =  newT;
     }
@@ -78,6 +80,9 @@ public:
         return *this;
     }
 
+    friend std::ostream& operator<< (std::ostream &out, const matrix &mat);
+    friend std::istream& operator>> (std::istream &in, matrix &mat);
+
 
 private:
     int w;
@@ -88,4 +93,21 @@ private:
 
 };
 
+std::ostream& operator<< (std::ostream &out, const matrix<int> &mat){
+    for(int y=0; y < mat.h; y++){
+        for (int x = 0; x< mat.w; x++){
+            out << mat.a[y][x] << " ";
+        }
+    }
+    return out;
+}
+
+std::istream& operator>> (std::istream &in, matrix<int> &mat){
+    for(int y=0; y < mat.h; y++){
+        for (int x = 0; x< mat.w; x++){
+            in >> mat.a[y][x];
+        }
+    }
+    return in;
+}
 #endif // MATRIX_H

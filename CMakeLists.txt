@@ -10,6 +10,8 @@ option(BUILD_TESTS "Build tests" ON)
 
 find_package(SFML COMPONENTS graphics CONFIG REQUIRED)
 find_package(GTest REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
+
 
 
 add_library(${PROJECT_NAME} STATIC
@@ -23,10 +25,14 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/shaders>"
     "${SFML_ROOT}/include"
+    "${BOOST_ROOT}/include"
 )
 
 
-target_link_libraries(main PUBLIC ${PROJECT_NAME} sfml-graphics)
+target_link_libraries(main PUBLIC
+    ${PROJECT_NAME} sfml-graphics
+    Boost::boost Boost::program_options
+)
 
 if(BUILD_TESTS)
   add_executable(tests
