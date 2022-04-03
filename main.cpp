@@ -5,6 +5,7 @@
 #include "matrix.h"
 #include <random>
 #include <boost/program_options.hpp>
+#include <cstdio>
 namespace po = boost::program_options;
 
 enum modes{
@@ -13,16 +14,14 @@ enum modes{
     graphicRandom
 };
 modes work_mode=newRandom;
-int matrix_w = 100;
-int matrix_h = 100;
-int pixel_w = 5;
+int matrix_w = 50;
+int matrix_h = 50;
+int pixel_w = 50;
 const int border_count = 10;
 int fps = 5;
-int count = 10000;
-std::string filename="../files/test.lpix";
+int count = matrix_h*matrix_w;
+std::string filename="../../files/test_an.lpix";
 int border_w = floor((float)pixel_w/(float)border_count);
-int w = matrix_w*(pixel_w+border_w)+border_w;
-int h = matrix_h*(pixel_w+border_w)+border_w;
 
 
 float* GetShaderArray(matrix<int>& m, int min_x, int max_x, int min_y, int max_y){
@@ -35,13 +34,56 @@ float* GetShaderArray(matrix<int>& m, int min_x, int max_x, int min_y, int max_y
     return arr;
 }
 
-void DarwMatrix(matrix<int>& m, int min_x, int max_x, int min_y, int max_y, sf::RenderWindow& window, sf::Shader& drawshader){
+void AnalizeFile(std::string tempFileName, std::string resultFileName){
+    std::ifstream tmpf(tempFileName, std::ios::binary);
+
+    std::string str, fin;
+    getline(tmpf, str, '\n');
+    getline(tmpf, str, '\n');
+    int size = str.size();
+
+    tmpf.seekg(-size-1, std::ios_base::end);
+    getline(tmpf, fin, '\n');
+
+    tmpf.seekg(size+1, std::ios_base::beg);
+    while (str!=fin){
+        getline(tmpf, str, '\n');
+    }
+    std::ios::pos_type spos = tmpf.tellg();
+    getline(tmpf, fin, '\n');
+    while (str!=fin && !tmpf.eof()){
+        getline(tmpf, str, '\n');
+    }
+    std::ios::pos_type fpos = tmpf.tellg();
+    int cycle_size = int(fpos)-int(spos)-1;
+    if (tmpf.eof()){
+        fin = str;
+        fpos = spos;
+        cycle_size = 0;
+        tmpf.clear();
+    }
+
+    tmpf.seekg(0, std::ios_base::beg);
+    std::ofstream newf(resultFileName, std::ios::binary);
+    while (fpos!=tmpf.tellg()){
+        getline(tmpf, str, '\n');
+        newf << str << "\n";
+    }
+    newf << "#" << cycle_size;
+    tmpf.close();
+    newf.close();
+    remove(tempFileName.c_str());
+
+
+}
+
+void DarwMatrix(matrix<int>& m, int min_x, int max_x, int min_y, int max_y, int w, int h, sf::RenderWindow& window, sf::Shader& drawshader){
     if((max_x-min_x)*(max_y-min_y)<=10000){
         sf::RenderTexture drawTexture;
         drawTexture.create(w, h);
         sf::Sprite draw = sf::Sprite(drawTexture.getTexture());
-        drawshader.setUniform("w", (float)matrix_w);
-        drawshader.setUniform("h", (float)matrix_h);
+        drawshader.setUniform("w", (float)m.width());
+        drawshader.setUniform("h", (float)m.hight());
         drawshader.setUniformArray("arr", GetShaderArray(m, 0, matrix_w, 0, matrix_h) , matrix_w*matrix_h);
         window.draw(draw, &drawshader);
     }
@@ -87,32 +129,36 @@ void LifeTick(matrix<int>& m){
 int main(int argc, char* argv[])
 {
    std::string  string_work_mode;
-    po::options_description desc("Allowed options");
-      desc.add_options()
+   po::options_description desc("Allowed options");
+   desc.add_options()
               ("t", po::value<std::string>(&string_work_mode), "set work mode(REQUIRED)")
               ("h", po::value<int>(&matrix_h), "set hight (REQUIRED)")
               ("w", po::value<int>(&matrix_w), "set width (REQUIRED)")
-              ("p", po::value<int>(&pixel_w)->default_value(1), "")
+              ("p", po::value<int>(&pixel_w), "")//->default_value(1), "")
               ("f", po::value<int>(&fps)->default_value(1), "")
-              ("c", po::value<int>(&count)->default_value(100), "")
+              ("c", po::value<int>(&count), "")
               ("help", "produce help message");
 
-      po::variables_map vm;
-      po::store(po::parse_command_line(argc, argv, desc), vm);
-      po::notify(vm);
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
 
-      if (vm.count("help")) {
+    if (vm.count("help")) {
         std::cout << desc << "\n";
         return 1;
-      }
+    }
 
-      if (!vm.count("t")||!vm.count("h")||!vm.count("w")) {
+    if (!vm.count("t")||!vm.count("h")||!vm.count("w")) {
         std::cout << "Usage: pixel [options]\n" << desc;
         exit(EXIT_FAILURE);
-      }
+    }
 
     if (string_work_mode=="fromFile"){
         std::ifstream ifile(filename, std::ios::binary);
+        ifile >> matrix_h;
+        ifile >> matrix_w;
+        int w = matrix_w*(pixel_w+border_w)+border_w;
+        int h = matrix_h*(pixel_w+border_w)+border_w;
         matrix<int> m(matrix_w, matrix_h, 0);
 
 
@@ -125,14 +171,19 @@ int main(int argc, char* argv[])
         emptyTexture.create(w, h);
         sf::Sprite grid = sf::Sprite(emptyTexture.getTexture());
         sf::Shader gridshader;
-        gridshader.loadFromFile("../shaders/grid.frag", sf::Shader::Fragment);
+        gridshader.loadFromFile("../../shaders/grid.frag", sf::Shader::Fragment);
 
         sf::Shader drawshader;
-        drawshader.loadFromFile("../shaders/draw.frag", sf::Shader::Fragment);
+        drawshader.loadFromFile("../../shaders/draw.frag", sf::Shader::Fragment);
         while (window.isOpen())
         {
-            if (!ifile.eof()){
+            if (ifile.peek()!='#'){
                 ifile >> m;
+            } else {
+                ifile.ignore('#');
+                int cycle_size;
+                ifile >> cycle_size;
+                ifile.seekg(-cycle_size);
             }
             sf::Event event;
             while (window.pollEvent(event))
@@ -147,7 +198,7 @@ int main(int argc, char* argv[])
             }
             window.clear();
 
-            DarwMatrix(m, 0, matrix_w, 0, matrix_h, window, drawshader);
+            DarwMatrix(m, 0, matrix_w, 0, matrix_h, w, h, window, drawshader);
 
 
             if (border_w>0){
@@ -162,7 +213,7 @@ int main(int argc, char* argv[])
 
         }
     }
-    else if (string_work_mode=="graphicRandom")
+    /*else if (string_work_mode=="graphicRandom")
     {
         std::ofstream ofile(filename, std::ios::binary);
         srand(time(0));
@@ -203,7 +254,7 @@ int main(int argc, char* argv[])
             }
             window.clear();
 
-            DarwMatrix(m, 0, matrix_w, 0, matrix_h, window, drawshader);
+            DarwMatrix(m, 0, matrix_w, 0, matrix_h, w, h, window, drawshader);
 
 
             if (border_w>0){
@@ -221,9 +272,10 @@ int main(int argc, char* argv[])
         }
         ofile.close();
 
-    }
+    }*/
     else if (string_work_mode=="newRandom"){
-        std::ofstream ofile(filename, std::ios::binary);
+        std::string file = filename+std::string(".temp");
+        std::ofstream tmpf(file,  std::ios::binary);
         srand(time(0));
         matrix<int> m(matrix_w, matrix_h, 0);
 
@@ -232,15 +284,16 @@ int main(int argc, char* argv[])
                 m.get(x, y) = rand()%2;
             }
         }
+        tmpf << m.hight() << " " << m.width() << "\n";
         for (int i=0; i<count; i++){
-            if(i%(count/100)==0){
+            /*if(i%(count/100)==0){
                 std::cout<<"|";
-            }
-            ofile<<m<<"\n";
-            sf::Event event;
+            }*/
+            tmpf<<m<<"\n";
             LifeTick(m);
         }
-        ofile.close();
+        tmpf.close();
+        AnalizeFile(file, filename);
     }
 
     return 0;

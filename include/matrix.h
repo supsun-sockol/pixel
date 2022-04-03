@@ -80,8 +80,8 @@ public:
         return *this;
     }
 
-    friend std::ostream& operator<< (std::ostream &out, const matrix &mat);
-    friend std::istream& operator>> (std::istream &in, matrix &mat);
+    friend std::ostream& operator<< (std::ostream &out, const matrix<int> &mat);
+    friend std::istream& operator>> (std::istream &in, matrix<int> &mat);
 
 
 private:
